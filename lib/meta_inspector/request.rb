@@ -1,6 +1,7 @@
 require 'faraday'
 require 'faraday_middleware'
 require 'faraday-cookie_jar'
+require 'faraday/http_cache'
 
 module MetaInspector
 
@@ -49,6 +50,11 @@ module MetaInspector
 
       session = Faraday.new(@faraday_options) do |faraday|
         faraday.request :retry, max: @retries
+        
+        if @faraday_options[:params][:store]
+          faraday.use Faraday::HttpCache, store: @faraday_options[:params][:store], serializer: Marshal
+          faraday.adapter Faraday.default_adapter
+        end
 
         if @allow_redirections
           faraday.use FaradayMiddleware::FollowRedirects, limit: 10
