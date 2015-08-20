@@ -24,6 +24,41 @@ describe MetaInspector::Request do
 
       expect(page_request.read[0..14]).to eq("<!DOCTYPE html>")
     end
+
+    context "with faraday (cache) store option" do
+      before(:each) do
+        FakeWeb.allow_net_connect = true
+      end
+
+      after(:each) do
+        FakeWeb.allow_net_connect = false
+      end
+
+      let(:store) { TestCache.new }
+      let(:faraday_options) { { params: { store: store } } }
+      let(:address) { url('http://google.com') }
+
+      it "stores response" do
+        expect(store).to receive(:write).once
+
+        MetaInspector::Request.new(address, faraday_options: faraday_options)
+      end
+
+      it "reads response from storage" do
+        expect(store).to receive(:read).at_least(:once)
+
+        MetaInspector::Request.new(address, faraday_options: faraday_options)
+      end
+
+      it "does not fetch when response is already cached" do
+        MetaInspector::Request.new(address, faraday_options: faraday_options)
+
+        expect(store).not_to receive(:write)
+        expect(store).to receive(:read).once
+
+        MetaInspector::Request.new(address, faraday_options: faraday_options)
+      end
+    end
   end
 
   describe "response" do
