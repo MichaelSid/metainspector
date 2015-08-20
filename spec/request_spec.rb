@@ -1,5 +1,21 @@
 require 'spec_helper'
 
+class TestCache < Hash
+  def read(key)
+    if cached = self[key]
+      Marshal.load(cached)
+    end
+  end
+
+  def write(key, data)
+    self[key] = Marshal.dump(data)
+  end
+
+  def fetch(key)
+    read(key) || yield.tap { |data| write(key, data) }
+  end
+end
+
 describe MetaInspector::Request do
 
   describe "read" do
