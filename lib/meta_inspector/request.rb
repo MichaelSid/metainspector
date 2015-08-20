@@ -50,8 +50,8 @@ module MetaInspector
 
       session = Faraday.new(@faraday_options) do |faraday|
         faraday.request :retry, max: @retries
-        
-        if @faraday_options[:params][:store]
+
+        if @faraday_options[:params] && @faraday_options[:params].fetch(:store)
           faraday.use Faraday::HttpCache, store: @faraday_options[:params][:store], serializer: Marshal
           faraday.adapter Faraday.default_adapter
         end
